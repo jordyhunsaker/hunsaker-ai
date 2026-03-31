@@ -64,21 +64,28 @@ function downloadICS(slot: Date, info: BookingInfo) {
   URL.revokeObjectURL(url);
 }
 
-function getWeekDays(startDate: Date): Date[] {
-  const days: Date[] = [];
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
+function getMonthDays(year: number, month: number): (Date | null)[] {
+  const days: (Date | null)[] = [];
 
-  // Find Monday of this week
-  const dayOfWeek = start.getDay();
-  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  start.setDate(start.getDate() + mondayOffset);
+  // First day of the month
+  const firstDay = new Date(year, month, 1);
+  // Day of week for the first day (0 = Sunday)
+  const startDayOfWeek = firstDay.getDay();
+  // Adjust for Monday start (0 = Monday, 6 = Sunday)
+  const startOffset = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
-  for (let i = 0; i < 7; i++) {
-    const day = new Date(start);
-    day.setDate(start.getDate() + i);
-    days.push(day);
+  // Add empty slots for days before the month starts
+  for (let i = 0; i < startOffset; i++) {
+    days.push(null);
   }
+
+  // Days in this month
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    days.push(new Date(year, month, day));
+  }
+
   return days;
 }
 
@@ -123,10 +130,9 @@ function formatDayHeader(date: Date): { dayName: string; dayNumber: string; mont
 }
 
 export default function Book() {
-  const [weekStart, setWeekStart] = useState(() => {
+  const [currentMonth, setCurrentMonth] = useState(() => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today;
+    return { year: today.getFullYear(), month: today.getMonth() };
   });
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
@@ -139,29 +145,55 @@ export default function Book() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
-  const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
+  const monthDays = useMemo(
+    () => getMonthDays(currentMonth.year, currentMonth.month),
+    [currentMonth]
+  );
   const selectedDaySlots = useMemo(
     () => (selectedDay ? getTimeSlotsForDay(selectedDay) : []),
     [selectedDay]
   );
 
-  const navigateWeek = (direction: number) => {
-    const newStart = new Date(weekStart);
-    newStart.setDate(newStart.getDate() + direction * 7);
+  const monthLabel = new Date(currentMonth.year, currentMonth.month).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
-    // Don't allow navigating to past weeks
+  const navigateMonth = (direction: number) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (newStart < today && direction < 0) {
+    const currentMonthDate = new Date(currentMonth.year, currentMonth.month);
+    const todayMonth = new Date(today.getFullYear(), today.getMonth());
+
+    // Don't allow navigating to past months
+    if (direction < 0 && currentMonthDate <= todayMonth) {
       return;
     }
 
-    setWeekStart(newStart);
+    setCurrentMonth((prev) => {
+      let newMonth = prev.month + direction;
+      let newYear = prev.year;
+
+      if (newMonth > 11) {
+        newMonth = 0;
+        newYear += 1;
+      } else if (newMonth < 0) {
+        newMonth = 11;
+        newYear -= 1;
+      }
+
+      return { year: newYear, month: newMonth };
+    });
     setSelectedDay(null);
     setSelectedSlot(null);
   };
 
-  const handleDaySelect = (day: Date) => {
+  const handleDaySelect = (day: Date | null) => {
+    if (!day) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (day < today) return;
+
     const isAvailable = CONFIG.availableDays.includes(day.getDay());
     const slots = getTimeSlotsForDay(day);
     if (!isAvailable || slots.length === 0) return;
@@ -265,21 +297,19 @@ export default function Book() {
           {/* Calendar */}
           <div>
             <div className="gradient-border rounded-lg bg-dark-800 overflow-hidden">
-              {/* Week navigation */}
+              {/* Month navigation */}
               <div className="flex items-center justify-between p-4 border-b border-dark-600">
                 <button
-                  onClick={() => navigateWeek(-1)}
+                  onClick={() => navigateMonth(-1)}
                   className="p-2 text-gray-400 hover:text-terminal-green transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
-                <span className="font-mono text-gray-200">
-                  {weekDays[0].toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                </span>
+                <span className="font-mono text-gray-200">{monthLabel}</span>
                 <button
-                  onClick={() => navigateWeek(1)}
+                  onClick={() => navigateMonth(1)}
                   className="p-2 text-gray-400 hover:text-terminal-green transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,45 +318,45 @@ export default function Book() {
                 </button>
               </div>
 
-              {/* Day selector */}
-              <div className="grid grid-cols-7 p-2 gap-1">
-                {weekDays.map((day, i) => {
-                  const { dayName, dayNumber } = formatDayHeader(day);
-                  const isToday = day.toDateString() === new Date().toDateString();
+              {/* Day of week headers */}
+              <div className="grid grid-cols-7 border-b border-dark-600">
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                  <div key={day} className="py-2 text-center text-xs text-gray-500 uppercase">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Month grid */}
+              <div className="grid grid-cols-7 gap-px bg-dark-700 p-px">
+                {monthDays.map((day, i) => {
+                  if (!day) {
+                    return <div key={i} className="bg-dark-800 aspect-square" />;
+                  }
+
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const isToday = day.toDateString() === today.toDateString();
+                  const isPast = day < today;
                   const isAvailable = CONFIG.availableDays.includes(day.getDay());
-                  const hasSlots = getTimeSlotsForDay(day).length > 0;
+                  const hasSlots = !isPast && getTimeSlotsForDay(day).length > 0;
                   const isSelected = selectedDay?.toDateString() === day.toDateString();
-                  const isClickable = isAvailable && hasSlots;
+                  const isClickable = isAvailable && hasSlots && !isPast;
 
                   return (
                     <button
                       key={i}
                       onClick={() => handleDaySelect(day)}
                       disabled={!isClickable}
-                      className={`p-3 rounded-lg text-center transition-colors ${
+                      className={`bg-dark-800 aspect-square flex items-center justify-center font-mono text-sm transition-colors ${
                         isSelected
-                          ? "bg-terminal-green text-dark-900"
+                          ? "bg-terminal-green text-dark-900 font-semibold"
                           : isClickable
-                          ? "bg-dark-700 hover:bg-dark-600 cursor-pointer"
-                          : "opacity-40 cursor-not-allowed"
-                      }`}
+                          ? "hover:bg-dark-600 text-gray-200 cursor-pointer"
+                          : "text-gray-600 cursor-default"
+                      } ${isToday && !isSelected ? "ring-1 ring-terminal-green ring-inset" : ""}`}
                     >
-                      <div className={`text-xs uppercase ${isSelected ? "text-dark-900" : "text-gray-500"}`}>
-                        {dayName}
-                      </div>
-                      <div
-                        className={`text-lg font-mono mt-1 ${
-                          isSelected
-                            ? "text-dark-900"
-                            : isToday
-                            ? "text-terminal-green"
-                            : isClickable
-                            ? "text-gray-200"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {dayNumber}
-                      </div>
+                      {day.getDate()}
                     </button>
                   );
                 })}
