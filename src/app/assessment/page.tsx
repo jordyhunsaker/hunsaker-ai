@@ -238,10 +238,18 @@ function getSectionScore(sectionId: string, answers: Answers): number {
   return section.questions.reduce((sum, q) => sum + (answers[q.id] || 0), 0);
 }
 
+type ContactInfo = {
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+};
+
 export default function Assessment() {
   const [currentSection, setCurrentSection] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
-  const [email, setEmail] = useState("");
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({ name: "", email: "", company: "", role: "" });
+  const [showCapture, setShowCapture] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -250,30 +258,36 @@ export default function Assessment() {
   const progress = (answeredQuestions / totalQuestions) * 100;
 
   const currentSectionData = sections[currentSection];
-  const isSectionComplete = currentSectionData.questions.every((q) => answers[q.id] !== undefined);
+  const isSectionComplete = currentSectionData?.questions.every((q) => answers[q.id] !== undefined) ?? false;
   const isLastSection = currentSection === sections.length - 1;
   const allQuestionsAnswered = answeredQuestions === totalQuestions;
+  const canSubmitContact = contactInfo.name && contactInfo.email;
 
   const handleAnswer = (questionId: string, value: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
   const handleNext = () => {
-    if (isLastSection) {
+    if (isLastSection && isSectionComplete) {
+      setShowCapture(true);
       return;
     }
     setCurrentSection((prev) => prev + 1);
   };
 
   const handleBack = () => {
+    if (showCapture) {
+      setShowCapture(false);
+      return;
+    }
     setCurrentSection((prev) => Math.max(0, prev - 1));
   };
 
   const handleSubmit = async () => {
-    if (!email) return;
+    if (!canSubmitContact) return;
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Simulate API call - replace with actual form submission
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     setShowResults(true);
     setIsSubmitting(false);
   };
@@ -281,6 +295,106 @@ export default function Assessment() {
   const totalScore = Object.values(answers).reduce((sum, val) => sum + val, 0);
   const readiness = getReadinessLevel(totalScore);
   const recommendations = getRecommendations(answers);
+
+  // Lead capture screen
+  if (showCapture && !showResults) {
+    return (
+      <main className="min-h-screen bg-dark-900 py-20 px-6">
+        <div className="max-w-xl mx-auto">
+          <div className="text-center mb-8">
+            <a href="/" className="font-mono text-xl font-bold text-terminal-green glow-green">
+              hunsaker.ai
+            </a>
+          </div>
+
+          <div className="gradient-border rounded-lg p-8 bg-dark-800">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-terminal-green/20 mb-4">
+                <span className="text-terminal-green text-2xl">&#10003;</span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">Assessment Complete</h1>
+              <p className="text-gray-400">
+                Your personalized AI readiness report is ready. Enter your details to see your results.
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-8">
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Name *</label>
+                <input
+                  type="text"
+                  value={contactInfo.name}
+                  onChange={(e) => setContactInfo((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="Your name"
+                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 placeholder-gray-500 focus:border-terminal-green focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Work Email *</label>
+                <input
+                  type="email"
+                  value={contactInfo.email}
+                  onChange={(e) => setContactInfo((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="you@company.com"
+                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 placeholder-gray-500 focus:border-terminal-green focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Company</label>
+                <input
+                  type="text"
+                  value={contactInfo.company}
+                  onChange={(e) => setContactInfo((prev) => ({ ...prev, company: e.target.value }))}
+                  placeholder="Company name"
+                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 placeholder-gray-500 focus:border-terminal-green focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Role</label>
+                <select
+                  value={contactInfo.role}
+                  onChange={(e) => setContactInfo((prev) => ({ ...prev, role: e.target.value }))}
+                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 focus:border-terminal-green focus:outline-none"
+                >
+                  <option value="">Select your role</option>
+                  <option value="founder">Founder / CEO</option>
+                  <option value="executive">Executive (CTO, COO, etc.)</option>
+                  <option value="director">Director / VP</option>
+                  <option value="manager">Manager</option>
+                  <option value="individual">Individual Contributor</option>
+                  <option value="consultant">Consultant / Advisor</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmitContact || isSubmitting}
+              className={`w-full py-4 rounded-lg font-semibold text-lg transition-colors ${
+                canSubmitContact && !isSubmitting
+                  ? "bg-terminal-green text-dark-900 hover:bg-terminal-green/90"
+                  : "bg-gray-600 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              {isSubmitting ? "Generating Report..." : "Get My Results"}
+            </button>
+
+            <p className="text-center text-gray-500 text-sm mt-4">
+              Your information is kept private and never shared.
+            </p>
+          </div>
+
+          <button
+            onClick={handleBack}
+            className="w-full mt-4 py-3 text-gray-400 hover:text-terminal-green transition-colors"
+          >
+            Back to questions
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   if (showResults) {
     return (
@@ -441,40 +555,17 @@ export default function Assessment() {
             Back
           </button>
 
-          {isLastSection && allQuestionsAnswered ? (
-            <div className="flex items-center gap-4">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 placeholder-gray-500 focus:border-terminal-green focus:outline-none"
-              />
-              <button
-                onClick={handleSubmit}
-                disabled={!email || isSubmitting}
-                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                  email && !isSubmitting
-                    ? "bg-terminal-green text-dark-900 hover:bg-terminal-green/90"
-                    : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                {isSubmitting ? "Analyzing..." : "Get Results"}
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleNext}
-              disabled={!isSectionComplete}
-              className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                isSectionComplete
-                  ? "bg-terminal-green text-dark-900 hover:bg-terminal-green/90"
-                  : "bg-gray-600 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              Next Section
-            </button>
-          )}
+          <button
+            onClick={handleNext}
+            disabled={!isSectionComplete}
+            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+              isSectionComplete
+                ? "bg-terminal-green text-dark-900 hover:bg-terminal-green/90"
+                : "bg-gray-600 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {isLastSection && isSectionComplete ? "See Results" : "Next Section"}
+          </button>
         </div>
       </div>
     </main>
