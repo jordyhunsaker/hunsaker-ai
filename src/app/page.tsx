@@ -81,7 +81,7 @@ export default function Home() {
                 Build <span className="text-terminal-green glow-green">AI-Powered</span> Systems That Actually Work
               </h1>
               <p className="text-xl text-gray-400 mb-8">
-                Cut through the hype. Get practical AI solutions tailored to your business—from strategy to
+                Cut through the hype. Get practical AI solutions tailored to your business, from strategy to
                 production-ready implementation.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -134,31 +134,27 @@ export default function Home() {
             Services
           </h2>
           <p className="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
-            End-to-end AI consulting—from identifying opportunities to deploying production systems.
+            End-to-end AI consulting, from identifying opportunities to deploying production systems.
           </p>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                icon: "🎯",
                 title: "AI Strategy",
                 description:
                   "Identify high-impact AI opportunities specific to your business. Get a clear roadmap with realistic timelines and ROI projections.",
               },
               {
-                icon: "⚡",
                 title: "Implementation",
                 description:
-                  "Hands-on development of AI systems—LLM integrations, automation pipelines, and custom ML solutions built for production.",
+                  "Hands-on development of AI systems, including LLM integrations, automation pipelines, and custom ML solutions built for production.",
               },
               {
-                icon: "🧠",
                 title: "Team Training",
                 description:
                   "Upskill your team on AI best practices. Learn to build, deploy, and maintain AI systems with confidence.",
               },
             ].map((service, i) => (
               <div key={i} className="gradient-border rounded-lg p-6 bg-dark-800 hover:bg-dark-700 transition-colors">
-                <div className="text-4xl mb-4">{service.icon}</div>
                 <h3 className="font-mono text-xl font-semibold text-terminal-green mb-3">{service.title}</h3>
                 <p className="text-gray-400">{service.description}</p>
               </div>
@@ -182,7 +178,7 @@ export default function Home() {
               { step: "04", title: "Launch", desc: "Deploy to production and measure real-world impact" },
             ].map((item, i) => (
               <div key={i} className="text-center">
-                <div className="font-mono text-5xl font-bold text-terminal-green/20 mb-2">{item.step}</div>
+                <div className="font-mono text-5xl font-bold text-terminal-green mb-2">{item.step}</div>
                 <h3 className="font-mono text-lg font-semibold text-terminal-cyan mb-2">{item.title}</h3>
                 <p className="text-gray-400 text-sm">{item.desc}</p>
               </div>
@@ -202,7 +198,7 @@ export default function Home() {
               </h2>
               <div className="space-y-4 text-gray-300">
                 <p>
-                  I&apos;m Jordy Hunsaker—an AI practitioner who builds systems that ship. Not slide decks. Not POCs
+                  I&apos;m Jordy Hunsaker, an AI practitioner who builds systems that ship. Not slide decks. Not POCs
                   that never leave the lab. Production-ready AI that delivers measurable business value.
                 </p>
                 <p>
