@@ -26,6 +26,16 @@ type BookingInfo = {
   notes: string;
 };
 
+type ValidationErrors = {
+  name?: string;
+  email?: string;
+};
+
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 function generateICS(slot: Date, info: BookingInfo): string {
   const endTime = new Date(slot.getTime() + CONFIG.meetingDuration * 60 * 1000);
 
@@ -140,8 +150,32 @@ export default function Book() {
     company: "",
     notes: "",
   });
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+
+    if (!bookingInfo.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+
+    if (!bookingInfo.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!validateEmail(bookingInfo.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    validateForm();
+  };
 
   const monthDays = useMemo(
     () => getMonthDays(currentMonth.year, currentMonth.month),
@@ -201,7 +235,8 @@ export default function Book() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedSlot || !bookingInfo.name || !bookingInfo.email) return;
+    setTouched({ name: true, email: true });
+    if (!selectedSlot || !validateForm()) return;
 
     setIsSubmitting(true);
 
@@ -215,7 +250,7 @@ export default function Book() {
     setIsSubmitting(false);
   };
 
-  const canSubmit = selectedSlot && bookingInfo.name && bookingInfo.email;
+  const canSubmit = selectedSlot && bookingInfo.name.trim() && bookingInfo.email.trim() && validateEmail(bookingInfo.email);
 
   if (isComplete && selectedSlot) {
     return (
@@ -434,9 +469,17 @@ export default function Book() {
                         onChange={(e) =>
                           setBookingInfo((prev) => ({ ...prev, name: e.target.value }))
                         }
+                        onBlur={() => handleBlur("name")}
                         placeholder="Your name"
-                        className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 placeholder-gray-500 focus:border-terminal-green focus:outline-none"
+                        className={`w-full px-4 py-3 bg-dark-700 border rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none ${
+                          touched.name && errors.name
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-dark-600 focus:border-terminal-green"
+                        }`}
                       />
+                      {touched.name && errors.name && (
+                        <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm text-gray-400 mb-2">Email *</label>
@@ -446,9 +489,17 @@ export default function Book() {
                         onChange={(e) =>
                           setBookingInfo((prev) => ({ ...prev, email: e.target.value }))
                         }
+                        onBlur={() => handleBlur("email")}
                         placeholder="you@company.com"
-                        className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 placeholder-gray-500 focus:border-terminal-green focus:outline-none"
+                        className={`w-full px-4 py-3 bg-dark-700 border rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none ${
+                          touched.email && errors.email
+                            ? "border-red-500 focus:border-red-500"
+                            : "border-dark-600 focus:border-terminal-green"
+                        }`}
                       />
+                      {touched.email && errors.email && (
+                        <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm text-gray-400 mb-2">Company</label>

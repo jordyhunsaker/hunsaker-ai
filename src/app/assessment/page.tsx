@@ -245,10 +245,22 @@ type ContactInfo = {
   role: string;
 };
 
+type ValidationErrors = {
+  name?: string;
+  email?: string;
+};
+
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 export default function Assessment() {
   const [currentSection, setCurrentSection] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [contactInfo, setContactInfo] = useState<ContactInfo>({ name: "", email: "", company: "", role: "" });
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [showCapture, setShowCapture] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -261,7 +273,30 @@ export default function Assessment() {
   const isSectionComplete = currentSectionData?.questions.every((q) => answers[q.id] !== undefined) ?? false;
   const isLastSection = currentSection === sections.length - 1;
   const allQuestionsAnswered = answeredQuestions === totalQuestions;
-  const canSubmitContact = contactInfo.name && contactInfo.email;
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+
+    if (!contactInfo.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+
+    if (!contactInfo.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!validateEmail(contactInfo.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    validateForm();
+  };
+
+  const canSubmitContact = contactInfo.name.trim() && contactInfo.email.trim() && validateEmail(contactInfo.email);
 
   const handleAnswer = (questionId: string, value: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -284,7 +319,8 @@ export default function Assessment() {
   };
 
   const handleSubmit = async () => {
-    if (!canSubmitContact) return;
+    setTouched({ name: true, email: true });
+    if (!validateForm()) return;
     setIsSubmitting(true);
     // Simulate API call - replace with actual form submission
     await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -325,9 +361,17 @@ export default function Assessment() {
                   type="text"
                   value={contactInfo.name}
                   onChange={(e) => setContactInfo((prev) => ({ ...prev, name: e.target.value }))}
+                  onBlur={() => handleBlur("name")}
                   placeholder="Your name"
-                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 placeholder-gray-500 focus:border-terminal-green focus:outline-none"
+                  className={`w-full px-4 py-3 bg-dark-700 border rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none ${
+                    touched.name && errors.name
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-dark-600 focus:border-terminal-green"
+                  }`}
                 />
+                {touched.name && errors.name && (
+                  <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Work Email *</label>
@@ -335,9 +379,17 @@ export default function Assessment() {
                   type="email"
                   value={contactInfo.email}
                   onChange={(e) => setContactInfo((prev) => ({ ...prev, email: e.target.value }))}
+                  onBlur={() => handleBlur("email")}
                   placeholder="you@company.com"
-                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 placeholder-gray-500 focus:border-terminal-green focus:outline-none"
+                  className={`w-full px-4 py-3 bg-dark-700 border rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none ${
+                    touched.email && errors.email
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-dark-600 focus:border-terminal-green"
+                  }`}
                 />
+                {touched.email && errors.email && (
+                  <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Company</label>
