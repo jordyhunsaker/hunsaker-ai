@@ -128,6 +128,7 @@ export default function Book() {
     today.setHours(0, 0, 0, 0);
     return today;
   });
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
   const [bookingInfo, setBookingInfo] = useState<BookingInfo>({
     name: "",
@@ -139,6 +140,10 @@ export default function Book() {
   const [isComplete, setIsComplete] = useState(false);
 
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
+  const selectedDaySlots = useMemo(
+    () => (selectedDay ? getTimeSlotsForDay(selectedDay) : []),
+    [selectedDay]
+  );
 
   const navigateWeek = (direction: number) => {
     const newStart = new Date(weekStart);
@@ -152,6 +157,16 @@ export default function Book() {
     }
 
     setWeekStart(newStart);
+    setSelectedDay(null);
+    setSelectedSlot(null);
+  };
+
+  const handleDaySelect = (day: Date) => {
+    const isAvailable = CONFIG.availableDays.includes(day.getDay());
+    const slots = getTimeSlotsForDay(day);
+    if (!isAvailable || slots.length === 0) return;
+
+    setSelectedDay(day);
     setSelectedSlot(null);
   };
 
@@ -246,9 +261,9 @@ export default function Book() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8">
           {/* Calendar */}
-          <div className="lg:col-span-3">
+          <div>
             <div className="gradient-border rounded-lg bg-dark-800 overflow-hidden">
               {/* Week navigation */}
               <div className="flex items-center justify-between p-4 border-b border-dark-600">
@@ -273,81 +288,94 @@ export default function Book() {
                 </button>
               </div>
 
-              {/* Day headers */}
-              <div className="grid grid-cols-7 border-b border-dark-600">
+              {/* Day selector */}
+              <div className="grid grid-cols-7 p-2 gap-1">
                 {weekDays.map((day, i) => {
                   const { dayName, dayNumber } = formatDayHeader(day);
                   const isToday = day.toDateString() === new Date().toDateString();
                   const isAvailable = CONFIG.availableDays.includes(day.getDay());
+                  const hasSlots = getTimeSlotsForDay(day).length > 0;
+                  const isSelected = selectedDay?.toDateString() === day.toDateString();
+                  const isClickable = isAvailable && hasSlots;
 
                   return (
-                    <div
+                    <button
                       key={i}
-                      className={`p-3 text-center ${!isAvailable ? "opacity-40" : ""}`}
+                      onClick={() => handleDaySelect(day)}
+                      disabled={!isClickable}
+                      className={`p-3 rounded-lg text-center transition-colors ${
+                        isSelected
+                          ? "bg-terminal-green text-dark-900"
+                          : isClickable
+                          ? "bg-dark-700 hover:bg-dark-600 cursor-pointer"
+                          : "opacity-40 cursor-not-allowed"
+                      }`}
                     >
-                      <div className="text-xs text-gray-500 uppercase">{dayName}</div>
+                      <div className={`text-xs uppercase ${isSelected ? "text-dark-900" : "text-gray-500"}`}>
+                        {dayName}
+                      </div>
                       <div
                         className={`text-lg font-mono mt-1 ${
-                          isToday
+                          isSelected
+                            ? "text-dark-900"
+                            : isToday
                             ? "text-terminal-green"
-                            : isAvailable
+                            : isClickable
                             ? "text-gray-200"
                             : "text-gray-600"
                         }`}
                       >
                         {dayNumber}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
 
-              {/* Time slots */}
-              <div className="grid grid-cols-7 gap-px bg-dark-600">
-                {weekDays.map((day, dayIndex) => {
-                  const slots = getTimeSlotsForDay(day);
-                  const isAvailable = CONFIG.availableDays.includes(day.getDay());
+              {/* Time slots for selected day */}
+              {selectedDay && (
+                <div className="p-4 border-t border-dark-600">
+                  <p className="text-sm text-gray-400 mb-3">
+                    Available times for{" "}
+                    <span className="text-terminal-green">
+                      {selectedDay.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {selectedDaySlots.map((slot, i) => {
+                      const isSelected = selectedSlot?.getTime() === slot.time.getTime();
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => setSelectedSlot(slot.time)}
+                          className={`py-2 px-3 font-mono text-sm rounded-lg transition-colors ${
+                            isSelected
+                              ? "bg-terminal-green text-dark-900"
+                              : "bg-dark-700 text-gray-300 hover:bg-dark-600 hover:text-terminal-green"
+                          }`}
+                        >
+                          {slot.formatted}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-                  return (
-                    <div key={dayIndex} className="bg-dark-800 min-h-64 p-2">
-                      {!isAvailable ? (
-                        <div className="h-full flex items-center justify-center">
-                          <span className="text-gray-600 text-xs">Unavailable</span>
-                        </div>
-                      ) : slots.length === 0 ? (
-                        <div className="h-full flex items-center justify-center">
-                          <span className="text-gray-600 text-xs">No slots</span>
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          {slots.map((slot, slotIndex) => {
-                            const isSelected =
-                              selectedSlot?.getTime() === slot.time.getTime();
-                            return (
-                              <button
-                                key={slotIndex}
-                                onClick={() => setSelectedSlot(slot.time)}
-                                className={`w-full py-1.5 px-1 text-xs font-mono rounded transition-colors ${
-                                  isSelected
-                                    ? "bg-terminal-green text-dark-900"
-                                    : "bg-dark-700 text-gray-300 hover:bg-dark-600 hover:text-terminal-green"
-                                }`}
-                              >
-                                {slot.formatted}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              {!selectedDay && (
+                <div className="p-8 text-center border-t border-dark-600">
+                  <p className="text-gray-500">Select a day to see available times</p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Booking form */}
-          <div className="lg:col-span-2">
+          <div>
             <div className="gradient-border rounded-lg p-6 bg-dark-800 sticky top-24">
               {selectedSlot ? (
                 <>
