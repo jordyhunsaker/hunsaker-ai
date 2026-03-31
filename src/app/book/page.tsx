@@ -71,11 +71,9 @@ function getMonthDays(year: number, month: number): (Date | null)[] {
   const firstDay = new Date(year, month, 1);
   // Day of week for the first day (0 = Sunday)
   const startDayOfWeek = firstDay.getDay();
-  // Adjust for Monday start (0 = Monday, 6 = Sunday)
-  const startOffset = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
-  // Add empty slots for days before the month starts
-  for (let i = 0; i < startOffset; i++) {
+  // Add empty slots for days before the month starts (Sunday = 0)
+  for (let i = 0; i < startDayOfWeek; i++) {
     days.push(null);
   }
 
@@ -320,7 +318,7 @@ export default function Book() {
 
               {/* Day of week headers */}
               <div className="grid grid-cols-7 border-b border-dark-600">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                   <div key={day} className="py-2 text-center text-xs text-gray-500 uppercase">
                     {day}
                   </div>
