@@ -455,7 +455,7 @@ export default function Assessment() {
               Ready to turn these insights into action? Book a free strategy call to discuss your AI roadmap.
             </p>
             <a
-              href="mailto:jordy@hunsaker.ai?subject=AI%20Readiness%20Assessment%20Follow-up"
+              href="/book"
               className="inline-block px-8 py-4 bg-terminal-green text-dark-900 font-bold text-lg rounded-lg hover:bg-terminal-green/90 transition-colors"
             >
               Book Strategy Call

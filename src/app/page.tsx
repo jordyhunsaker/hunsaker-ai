@@ -65,10 +65,10 @@ export default function Home() {
               Contact
             </a>
             <a
-              href="#contact"
+              href="/book"
               className="px-4 py-2 bg-terminal-green text-dark-900 font-semibold rounded hover:bg-terminal-green/90 transition-colors"
             >
-              Get Started
+              Book a Call
             </a>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <a
-                  href="#contact"
+                  href="/book"
                   className="px-6 py-3 bg-terminal-green text-dark-900 font-semibold rounded-lg hover:bg-terminal-green/90 transition-colors text-center"
                 >
                   Book a Strategy Call
@@ -256,12 +256,14 @@ export default function Home() {
             Book a free strategy call to discuss your AI goals and explore how we can work together.
           </p>
           <a
-            href="mailto:jordy@hunsaker.ai"
+            href="/book"
             className="inline-block px-8 py-4 bg-terminal-green text-dark-900 font-bold text-lg rounded-lg hover:bg-terminal-green/90 transition-colors"
           >
             Book Strategy Call
           </a>
-          <p className="mt-4 font-mono text-gray-500">jordy@hunsaker.ai</p>
+          <p className="mt-4 text-gray-500">
+            Or email directly: <a href="mailto:jordy@hunsaker.ai" className="font-mono text-terminal-green hover:underline">jordy@hunsaker.ai</a>
+          </p>
         </div>
       </section>
 
