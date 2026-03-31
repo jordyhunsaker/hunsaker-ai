@@ -55,6 +55,9 @@ export default function Home() {
             <a href="#services" className="text-gray-400 hover:text-terminal-green transition-colors">
               Services
             </a>
+            <a href="/assessment" className="text-gray-400 hover:text-terminal-green transition-colors">
+              Assessment
+            </a>
             <a href="#about" className="text-gray-400 hover:text-terminal-green transition-colors">
               About
             </a>
@@ -92,10 +95,10 @@ export default function Home() {
                   Book a Strategy Call
                 </a>
                 <a
-                  href="#services"
+                  href="/assessment"
                   className="px-6 py-3 border border-terminal-green text-terminal-green font-semibold rounded-lg hover:bg-terminal-green/10 transition-colors text-center"
                 >
-                  View Services
+                  Take Free Assessment
                 </a>
               </div>
             </div>
