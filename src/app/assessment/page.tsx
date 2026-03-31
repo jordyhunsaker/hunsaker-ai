@@ -351,20 +351,27 @@ export default function Assessment() {
               </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Role</label>
-                <select
-                  value={contactInfo.role}
-                  onChange={(e) => setContactInfo((prev) => ({ ...prev, role: e.target.value }))}
-                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 focus:border-terminal-green focus:outline-none"
-                >
-                  <option value="">Select your role</option>
-                  <option value="founder">Founder / CEO</option>
-                  <option value="executive">Executive (CTO, COO, etc.)</option>
-                  <option value="director">Director / VP</option>
-                  <option value="manager">Manager</option>
-                  <option value="individual">Individual Contributor</option>
-                  <option value="consultant">Consultant / Advisor</option>
-                  <option value="other">Other</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={contactInfo.role}
+                    onChange={(e) => setContactInfo((prev) => ({ ...prev, role: e.target.value }))}
+                    className="w-full px-4 py-3 pr-12 bg-dark-700 border border-dark-600 rounded-lg text-gray-200 focus:border-terminal-green focus:outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="">Select your role</option>
+                    <option value="founder">Founder / CEO</option>
+                    <option value="executive">Executive (CTO, COO, etc.)</option>
+                    <option value="director">Director / VP</option>
+                    <option value="manager">Manager</option>
+                    <option value="individual">Individual Contributor</option>
+                    <option value="consultant">Consultant / Advisor</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
 
