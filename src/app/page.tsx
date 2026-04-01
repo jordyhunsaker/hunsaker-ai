@@ -198,6 +198,12 @@ export default function Home() {
             <a href="/insights" className="text-gray-400 hover:text-terminal-green transition-colors">
               Insights
             </a>
+            <a href="/prompts" className="text-gray-400 hover:text-terminal-green transition-colors">
+              Prompts
+            </a>
+            <a href="/hire" className="text-gray-400 hover:text-terminal-green transition-colors">
+              Hiring Tool
+            </a>
             <a
               href="/book"
               className="px-4 py-2 bg-terminal-green text-dark-900 font-semibold rounded hover:bg-terminal-green/90 transition-colors"
